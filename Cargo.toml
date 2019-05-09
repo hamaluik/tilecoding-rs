@@ -1,0 +1,8 @@
+[package]
+name = "tilecoding"
+version = "0.1.0"
+authors = ["Kenton Hamaluik <kenton@hamaluik.ca>"]
+edition = "2018"
+
+[dependencies]
+rand = "^0.6"
