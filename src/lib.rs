@@ -1,79 +1,64 @@
 #![feature(test)]
 
-pub struct TileCoords {
+use std::collections::HashMap;
+
+pub struct IHT {
     size: usize,
-    num_tilings: usize,
-    rand_sequence: [isize; 2048],
+    overfull_count: usize,
+    dictionary: HashMap<Vec<isize>, usize>,
 }
 
-impl TileCoords {
-    pub fn new(size: usize, num_tilings: usize) -> TileCoords {
-        TileCoords {
+impl IHT {
+    pub fn new(size: usize) -> IHT {
+        IHT {
             size,
-            num_tilings,
-            rand_sequence: {
-                let mut rs: [isize; 2048] = [0; 2048];
-                for k in 0..2048 {
-                    for _ in 0..std::mem::size_of::<isize>() {
-                        rs[k] = (rs[k] << 8) | (rand::random::<isize>() & 0xff);
-                    }
+            overfull_count: 0,
+            dictionary: HashMap::with_capacity(size),
+        }
+    }
+
+    fn basehash<H>(obj: H) -> usize
+        where H: std::hash::Hash {
+        use std::collections::hash_map::DefaultHasher;
+        use std::hash::Hasher;
+
+        let mut hasher = DefaultHasher::new();
+        obj.hash(&mut hasher);
+        hasher.finish() as usize
+    }
+
+    fn get_index(&mut self, obj: Vec<isize>) -> usize {
+        let count = self.dictionary.len();
+        use std::collections::hash_map::Entry;
+        match self.dictionary.entry(obj) {
+            Entry::Occupied(o) => *o.get(),
+            Entry::Vacant(v) => {
+                if count >= self.size {
+                    self.overfull_count += 1;
+                    IHT::basehash(v.into_key())
                 }
-                rs
-            },
+                else {
+                    *v.insert(count)
+                }
+            }
         }
     }
 
-    fn hash_unh(&self, coordinates: &[isize], m: isize, increment: isize) -> usize {
-        let mut index: isize;
-        let mut sum: isize = 0;
+    pub fn tile(&mut self, num_tilings: usize, data_point: &[f64]) -> Vec<usize> {
+        let q_floats = data_point.iter().map(|&x| (x * num_tilings as f64).floor() as isize).collect::<Vec<isize>>();
+        let mut tiles: Vec<usize> = Vec::with_capacity(num_tilings);
 
-        for i in 0..coordinates.len() {
-            index = coordinates[i];
-            index += increment * i as isize;
-            index = index & 2047;
-            while index < 0 {
-                index += 2048;
+        for tiling in 0..num_tilings {
+            let tiling_x2 = tiling as isize * 2;
+            let mut coords = Vec::with_capacity(1 + q_floats.len());
+            coords.push(tiling as isize);
+            let mut b = tiling as isize;
+            for q in q_floats.iter() {
+                coords.push((q + b) / num_tilings as isize);
+                b += tiling_x2;
             }
-            sum = sum.wrapping_add(self.rand_sequence[index as usize]);
-        }
 
-        index = sum as isize % m;
-        while index < 0 {
-            index += m;
-        }
-
-        index as usize
-    }
-
-    pub fn tile(&self, data_point: &[f32]) -> Vec<usize> {
-        let mut base: Vec<isize> = vec![0; data_point.len()];
-        let mut tiles: Vec<usize> = Vec::with_capacity(self.num_tilings);
-        let mut coordinates: Vec<isize> = vec![0; data_point.len() + 1];
-
-        // quantize the state to integers (henceforth, tile widths == self.num_tilings)
-        let qstate = data_point.iter().map(|&x| (x * self.num_tilings as f32).floor() as isize).collect::<Vec<isize>>();
-
-        // compute the tile numbers
-        for tiling in 0..self.num_tilings {
-            // loop over each relevant dimension
-            for i in 0..data_point.len() {
-                // find coordinates of activated tile in tiling space
-                coordinates[i] =
-                    if qstate[i] >= base[i] {
-                        qstate[i] - ((qstate[i] - base[i]) % self.num_tilings as isize)
-                    }
-                    else {
-                        qstate[i] + 1 + ((base[i] - qstate[i] - 1) % self.num_tilings as isize) - self.num_tilings as isize
-                    };
-                
-                // compute displacement of next tiling in quantized space
-                base[i] += 1 + (2 * i as isize);
-            }
-            // add additional indices for tiling and hashing_set so they hash differently
-            coordinates[data_point.len()] = tiling as isize;
-
-            // calculate the tile
-            tiles.push(self.hash_unh(&coordinates, self.size as isize, 449));
+            tiles.push(self.get_index(coords));
         }
 
         tiles
@@ -89,20 +74,20 @@ mod tests {
 
     #[test]
     fn proper_number_of_tiles() {
-        let iht = TileCoords::new(32, 8);
-        let indices = iht.tile(&[0.0]);
+        let mut iht = IHT::new(32);
+        let indices = iht.tile(8, &[0.0]);
         assert_eq!(indices.len(), 8);
     }
 
     #[test]
     fn same_tiles_for_same_coords() {
-        let iht = TileCoords::new(32, 8);
-        let indices_1 = iht.tile(&[0.0]);
-        let indices_2 = iht.tile(&[0.0]);
-        let indices_3 = iht.tile(&[0.5]);
-        let indices_4 = iht.tile(&[0.5]);
-        let indices_5 = iht.tile(&[1.0]);
-        let indices_6 = iht.tile(&[1.0]);
+        let mut iht = IHT::new(32);
+        let indices_1 = iht.tile(8, &[0.0]);
+        let indices_2 = iht.tile(8, &[0.0]);
+        let indices_3 = iht.tile(8, &[0.5]);
+        let indices_4 = iht.tile(8, &[0.5]);
+        let indices_5 = iht.tile(8, &[1.0]);
+        let indices_6 = iht.tile(8, &[1.0]);
 
         assert_eq!(indices_1, indices_2);
         assert_eq!(indices_3, indices_4);
@@ -111,10 +96,10 @@ mod tests {
 
     #[test]
     fn different_tiles_for_different_coords() {
-        let iht = TileCoords::new(32, 8);
-        let indices_1 = iht.tile(&[0.0]);
-        let indices_2 = iht.tile(&[0.5]);
-        let indices_3 = iht.tile(&[1.0]);
+        let mut iht = IHT::new(32);
+        let indices_1 = iht.tile(8, &[0.0]);
+        let indices_2 = iht.tile(8, &[0.5]);
+        let indices_3 = iht.tile(8, &[1.0]);
 
         assert_ne!(indices_1, indices_2);
         assert_ne!(indices_2, indices_3);
@@ -123,17 +108,17 @@ mod tests {
 
     #[test]
     fn can_be_negative() {
-        let iht = TileCoords::new(32, 8);
-        let indices = iht.tile(&[-10.0]);
+        let mut iht = IHT::new(32);
+        let indices = iht.tile(8, &[-10.0]);
         assert_eq!(indices.len(), 8);
     }
 
     #[test]
     fn appropriate_distance() {
-        let iht = TileCoords::new(32, 4);
-        let indices_1 = iht.tile(&[0.0]);
-        let indices_2 = iht.tile(&[0.125]);
-        let indices_3 = iht.tile(&[0.25]);
+        let mut iht = IHT::new(32);
+        let indices_1 = iht.tile(4, &[0.0]);
+        let indices_2 = iht.tile(4, &[0.125]);
+        let indices_3 = iht.tile(4, &[0.25]);
 
         assert_eq!(indices_1, indices_2);
         assert_ne!(indices_1, indices_3);
@@ -141,25 +126,25 @@ mod tests {
 
     #[bench]
     fn bench_tile_code_small_single_dimension(b: &mut Bencher) {
-        let iht = TileCoords::new(32, 8);
-        b.iter(|| iht.tile(&[0.0]));
+        let mut iht = IHT::new(32);
+        b.iter(|| iht.tile(8, &[0.0]));
     }
 
     #[bench]
     fn bench_tile_code_single_dimension(b: &mut Bencher) {
-        let iht = TileCoords::new(2048, 8);
-        b.iter(|| iht.tile(&[0.0]));
+        let mut iht = IHT::new(2048);
+        b.iter(|| iht.tile(8, &[0.0]));
     }
 
     #[bench]
     fn bench_tile_code_small_four_dimensions(b: &mut Bencher) {
-        let iht = TileCoords::new(32, 8);
-        b.iter(|| iht.tile(&[0.0, 1.0, 2.0, 3.0]));
+        let mut iht = IHT::new(32);
+        b.iter(|| iht.tile(8, &[0.0, 1.0, 2.0, 3.0]));
     }
 
     #[bench]
     fn bench_tile_code_four_dimensions(b: &mut Bencher) {
-        let iht = TileCoords::new(2048, 8);
-        b.iter(|| iht.tile(&[0.0, 1.0, 2.0, 3.0]));
+        let mut iht = IHT::new(2048);
+        b.iter(|| iht.tile(8, &[0.0, 1.0, 2.0, 3.0]));
     }
 }
