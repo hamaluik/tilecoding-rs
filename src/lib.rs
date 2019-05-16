@@ -77,7 +77,7 @@ impl IHT {
     }
 }
 
-fn tiles(size: usize, num_tilings: usize, data_point: &[f64]) -> Vec<usize> {
+pub fn tiles(size: usize, num_tilings: usize, data_point: &[f64]) -> Vec<usize> {
     let q_floats = data_point
         .iter()
         .map(|&x| (x * num_tilings as f64).floor() as isize)
