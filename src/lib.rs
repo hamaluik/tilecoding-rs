@@ -2,6 +2,16 @@
 
 use std::collections::HashMap;
 
+fn basehash<H>(obj: H) -> usize
+    where H: std::hash::Hash {
+    use std::collections::hash_map::DefaultHasher;
+    use std::hash::Hasher;
+
+    let mut hasher = DefaultHasher::new();
+    obj.hash(&mut hasher);
+    hasher.finish() as usize
+}
+
 pub struct IHT {
     size: usize,
     overfull_count: usize,
@@ -17,16 +27,6 @@ impl IHT {
         }
     }
 
-    fn basehash<H>(obj: H) -> usize
-        where H: std::hash::Hash {
-        use std::collections::hash_map::DefaultHasher;
-        use std::hash::Hasher;
-
-        let mut hasher = DefaultHasher::new();
-        obj.hash(&mut hasher);
-        hasher.finish() as usize
-    }
-
     fn get_index(&mut self, obj: Vec<isize>) -> usize {
         let count = self.dictionary.len();
         use std::collections::hash_map::Entry;
@@ -35,7 +35,7 @@ impl IHT {
             Entry::Vacant(v) => {
                 if count >= self.size {
                     self.overfull_count += 1;
-                    IHT::basehash(v.into_key())
+                    basehash(v.into_key())
                 }
                 else {
                     *v.insert(count)
