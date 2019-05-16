@@ -3,7 +3,8 @@
 
 use std::collections::HashMap;
 
-fn base_hash<H>(obj: H) -> usize
+/// Convenience function for hashing a hashable object using the std hashmap's default hasher
+pub fn base_hash<H>(obj: H) -> usize
 where
     H: std::hash::Hash,
 {
@@ -15,6 +16,9 @@ where
     hasher.finish() as usize
 }
 
+/// An index-hash-table, or IHT. It will allow to collect tile indices up to a
+/// certain size, after which collisions will start to occur. The underlying storage
+/// is a HashMap
 pub struct IHT {
     size: usize,
     overfull_count: usize,
@@ -22,6 +26,8 @@ pub struct IHT {
 }
 
 impl IHT {
+    /// Create a new IHT with the given size. The `tiles` function will never
+    /// report an index >= this size.
     pub fn new(size: usize) -> IHT {
         IHT {
             size,
@@ -31,30 +37,81 @@ impl IHT {
     }
 
     fn get_index(&mut self, obj: Vec<isize>) -> usize {
+        // store the count for later use
         let count = self.dictionary.len();
+
+        // use the entry api on hashmaps to improve performance
         use std::collections::hash_map::Entry;
         match self.dictionary.entry(obj) {
+            // if the object already exists in the hashmap, return the index
             Entry::Occupied(o) => *o.get(),
+
             Entry::Vacant(v) => {
+                // the object isn't already stored in the dictionary
                 if count >= self.size {
+                    // if we're full, allow collisions (keeping track of this fact)
                     self.overfull_count += 1;
                     base_hash(v.into_key())
                 } else {
+                    // otherwise, just insert into the dictionary and return the result
                     *v.insert(count)
                 }
             }
         }
     }
 
+    /// Convenience function to determine if the IHT is full. If it is, new tilings will result in collisions rather than new indices.
     pub fn full(&self) -> bool {
         self.dictionary.len() >= self.size
     }
 
+    /// Convenience function to determine how full the IHT is. The maximum value will be the IHT size
     pub fn count(&self) -> usize {
         self.dictionary.len()
     }
 
+    /// Convenience function get the size of the IHT, in case you forgot what it was
+    pub fn size(&self) -> usize {
+        self.size
+    }
+
+    /// This function takes a series of floating point and integer values, and encodes them as tile indices using the underlying IHT to deal with collisions.
     /// 
+    /// # Arguments
+    /// 
+    /// * `num_tilings`—indicates the number of tile indices to be generated (i.e. the length of the returned `Vec`). This value hould be a power of two greater or equal to four times the number of floats according to the original implementation.
+    /// * `floats`—a list of floating-point numbers to be tiled
+    /// * `ints`—an optional list of integers that will also be tiled; all distinct integers will result in different tilings. In reinforcement learning, discrete actions are often provided here.
+    /// 
+    /// # Return Value
+    /// 
+    /// The returned `Vec<usize>` is a vector containing exactly `num_tilings` elements, with each member being an index of a tile encoded by the function. Each member will always be >= 0 and <= size - 1.
+    /// 
+    /// # Examples
+    /// 
+    /// ```
+    /// # use tilecoding::IHT;
+    /// // initialize an index-hash-table with size `1024`
+    /// let mut iht = IHT::new(1024);
+    /// 
+    /// // find the indices of tiles for the point (x, y) = (3.6, 7.21) using 8 tilings:
+    /// let indices = iht.tiles(8, &[3.6, 7.21], None);
+    /// 
+    /// // this is the first time we've used the IHT, so we will get the starting tiles:
+    /// assert_eq!(indices, vec![0, 1, 2, 3, 4, 5, 6, 7]);
+    /// 
+    /// // a nearby point:
+    /// let indices = iht.tiles(8, &[3.7, 7.21], None);
+    /// 
+    /// // differs by one tile:
+    /// assert_eq!(indices, vec![0, 1, 2, 8, 4, 5, 6, 7]);
+    /// 
+    /// // and a point more than one away in any dim
+    /// let indices = iht.tiles(8, &[-37.2, 7.0], None);
+    /// 
+    /// // will have all different tiles
+    /// assert_eq!(indices, vec![9, 10, 11, 12, 13, 14, 15, 16]);
+    /// ```
     pub fn tiles(&mut self, num_tilings: usize, floats: &[f64], ints: Option<&[isize]>) -> Vec<usize> {
         let q_floats = floats
             .iter()
@@ -81,6 +138,42 @@ impl IHT {
     }
 }
 
+/// This function takes a series of floating point and integer values, and encodes them as tile indices using a provided size. This function is generally reserved for when you have extraordinarily large sizes that are too large for the IHT.
+/// 
+/// # Arguments
+/// 
+/// * `size`—the upper bounds of all returned indices
+/// * `num_tilings`—indicates the number of tile indices to be generated (i.e. the length of the returned `Vec`). This value hould be a power of two greater or equal to four times the number of floats according to the original implementation.
+/// * `floats`—a list of floating-point numbers to be tiled
+/// * `ints`—an optional list of integers that will also be tiled; all distinct integers will result in different tilings. In reinforcement learning, discrete actions are often provided here.
+/// 
+/// # Return Value
+/// 
+/// The returned `Vec<usize>` is a vector containing exactly `num_tilings` elements, with each member being an index of a tile encoded by the function. Each member will always be >= 0 and <= size - 1.
+/// 
+/// # Examples
+/// 
+/// ```
+/// # use tilecoding::tiles;
+/// // find the indices of tiles for the point (x, y) = (3.6, 7.21) using 8 tilings and a maximum size of 1024:
+/// let indices = tiles(1024, 8, &[3.6, 7.21], None);
+/// 
+/// // we get tiles all over the 1024 space as a direct result of the hashing
+/// // instead of the more ordered indices provided by an IHT
+/// assert_eq!(indices, vec![511, 978, 632, 867, 634, 563, 779, 737]);
+/// 
+/// // a nearby point:
+/// let indices = tiles(1024, 8, &[3.7, 7.21], None);
+/// 
+/// // differs by one tile:
+/// assert_eq!(indices, vec![511, 978, 632, 987, 634, 563, 779, 737]);
+/// 
+/// // and a point more than one away in any dim
+/// let indices = tiles(1024, 8, &[-37.2, 7.0], None);
+/// 
+/// // will have all different tiles
+/// assert_eq!(indices, vec![638, 453, 557, 465, 306, 526, 281, 863]);
+/// ```
 pub fn tiles(size: usize, num_tilings: usize, floats: &[f64], ints: Option<&[isize]>) -> Vec<usize> {
     let q_floats = floats
         .iter()
@@ -163,17 +256,6 @@ mod tests {
 
         assert_eq!(indices_1, indices_2);
         assert_ne!(indices_1, indices_3);
-    }
-
-    #[test]
-    fn readme_example() {
-        let mut iht = IHT::new(1024);
-        let indices = iht.tiles(8, &[3.6, 7.21], None);
-        assert_eq!(indices, vec![0, 1, 2, 3, 4, 5, 6, 7]);
-        let indices = iht.tiles(8, &[3.7, 7.21], None);
-        assert_eq!(indices, vec![0, 1, 2, 8, 4, 5, 6, 7]);
-        let indices = iht.tiles(8, &[-37.2, 7.0], None);
-        assert_eq!(indices, vec![9, 10, 11, 12, 13, 14, 15, 16]);
     }
 
     /*#[bench]
