@@ -1,7 +1,7 @@
 # Tilecoding (Rust Implementation)
 
 [![Crates.io](https://img.shields.io/crates/v/tilecoding.svg)](https://crates.io/crates/tilecoding)
-[![Docs](https://docs.rs/tilecoding/badge.svg)](https://docs.rs/tilecoding)
+[![Docs](https://docs.rs/tilecoding/badge.svg)](https://docs.rs/crate/tilecoding/)
 [![Build Status](https://travis-ci.org/hamaluik/tilecoding-rs.svg?branch=master)](https://travis-ci.org/hamaluik/tilecoding-rs)
 
 This is a Rust version of the Tile Coding Software developed by [Dr. Richard S. Sutton](http://richsutton.com/index.html) available on his website at: http://incompleteideas.net/tiles/tiles3.html. It is strongly suggested to read that page in full as it describes the reasoning behind this software, how to use it, and gives examples.
