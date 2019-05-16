@@ -53,12 +53,12 @@ impl IHT {
         self.dictionary.len()
     }
 
-    pub fn tiles(&mut self, num_tilings: usize, floats: &[f64]) -> Vec<usize> {
+    pub fn tiles(&mut self, num_tilings: usize, floats: &[f64], ints: &[isize]) -> Vec<usize> {
         let q_floats = floats
             .iter()
             .map(|&x| (x * num_tilings as f64).floor() as isize)
             .collect::<Vec<isize>>();
-        let mut tiles: Vec<usize> = Vec::with_capacity(num_tilings);
+        let mut tiles: Vec<usize> = Vec::with_capacity(num_tilings + ints.len());
 
         for tiling in 0..num_tilings {
             let tiling_x2 = tiling as isize * 2;
@@ -69,7 +69,7 @@ impl IHT {
                 coords.push((q + b) / num_tilings as isize);
                 b += tiling_x2;
             }
-
+            coords.extend(ints);
             tiles.push(self.get_index(coords));
         }
 
@@ -77,12 +77,12 @@ impl IHT {
     }
 }
 
-pub fn tiles(size: usize, num_tilings: usize, floats: &[f64]) -> Vec<usize> {
+pub fn tiles(size: usize, num_tilings: usize, floats: &[f64], ints: &[isize]) -> Vec<usize> {
     let q_floats = floats
         .iter()
         .map(|&x| (x * num_tilings as f64).floor() as isize)
         .collect::<Vec<isize>>();
-    let mut tiles: Vec<usize> = Vec::with_capacity(num_tilings);
+    let mut tiles: Vec<usize> = Vec::with_capacity(num_tilings + ints.len());
 
     for tiling in 0..num_tilings {
         let tiling_x2 = tiling as isize * 2;
@@ -93,7 +93,7 @@ pub fn tiles(size: usize, num_tilings: usize, floats: &[f64]) -> Vec<usize> {
             coords.push((q + b) / num_tilings as isize);
             b += tiling_x2;
         }
-
+        coords.extend(ints);
         tiles.push(base_hash(coords) % size);
     }
 
@@ -110,19 +110,19 @@ mod tests {
     #[test]
     fn proper_number_of_tiles() {
         let mut iht = IHT::new(32);
-        let indices = iht.tiles(8, &[0.0]);
+        let indices = iht.tiles(8, &[0.0], &[]);
         assert_eq!(indices.len(), 8);
     }
 
     #[test]
     fn same_tiles_for_same_coords() {
         let mut iht = IHT::new(32);
-        let indices_1 = iht.tiles(8, &[0.0]);
-        let indices_2 = iht.tiles(8, &[0.0]);
-        let indices_3 = iht.tiles(8, &[0.5]);
-        let indices_4 = iht.tiles(8, &[0.5]);
-        let indices_5 = iht.tiles(8, &[1.0]);
-        let indices_6 = iht.tiles(8, &[1.0]);
+        let indices_1 = iht.tiles(8, &[0.0], &[]);
+        let indices_2 = iht.tiles(8, &[0.0], &[]);
+        let indices_3 = iht.tiles(8, &[0.5], &[]);
+        let indices_4 = iht.tiles(8, &[0.5], &[]);
+        let indices_5 = iht.tiles(8, &[1.0], &[]);
+        let indices_6 = iht.tiles(8, &[1.0], &[]);
 
         assert_eq!(indices_1, indices_2);
         assert_eq!(indices_3, indices_4);
@@ -132,9 +132,9 @@ mod tests {
     #[test]
     fn different_tiles_for_different_coords() {
         let mut iht = IHT::new(32);
-        let indices_1 = iht.tiles(8, &[0.0]);
-        let indices_2 = iht.tiles(8, &[0.5]);
-        let indices_3 = iht.tiles(8, &[1.0]);
+        let indices_1 = iht.tiles(8, &[0.0], &[]);
+        let indices_2 = iht.tiles(8, &[0.5], &[]);
+        let indices_3 = iht.tiles(8, &[1.0], &[]);
 
         assert_ne!(indices_1, indices_2);
         assert_ne!(indices_2, indices_3);
@@ -144,16 +144,16 @@ mod tests {
     #[test]
     fn can_be_negative() {
         let mut iht = IHT::new(32);
-        let indices = iht.tiles(8, &[-10.0]);
+        let indices = iht.tiles(8, &[-10.0], &[]);
         assert_eq!(indices.len(), 8);
     }
 
     #[test]
     fn appropriate_distance() {
         let mut iht = IHT::new(32);
-        let indices_1 = iht.tiles(4, &[0.0]);
-        let indices_2 = iht.tiles(4, &[0.125]);
-        let indices_3 = iht.tiles(4, &[0.25]);
+        let indices_1 = iht.tiles(4, &[0.0], &[]);
+        let indices_2 = iht.tiles(4, &[0.125], &[]);
+        let indices_3 = iht.tiles(4, &[0.25], &[]);
 
         assert_eq!(indices_1, indices_2);
         assert_ne!(indices_1, indices_3);
@@ -162,44 +162,44 @@ mod tests {
     #[bench]
     fn bench_iht_tile_code_small_single_dimension(b: &mut Bencher) {
         let mut iht = IHT::new(32);
-        b.iter(|| iht.tiles(8, &[0.0]));
+        b.iter(|| iht.tiles(8, &[0.0], &[]));
     }
 
     #[bench]
     fn bench_iht_tile_code_single_dimension(b: &mut Bencher) {
         let mut iht = IHT::new(2048);
-        b.iter(|| iht.tiles(8, &[0.0]));
+        b.iter(|| iht.tiles(8, &[0.0], &[]));
     }
 
     #[bench]
     fn bench_iht_tile_code_small_four_dimensions(b: &mut Bencher) {
         let mut iht = IHT::new(32);
-        b.iter(|| iht.tiles(8, &[0.0, 1.0, 2.0, 3.0]));
+        b.iter(|| iht.tiles(8, &[0.0, 1.0, 2.0, 3.0], &[]));
     }
 
     #[bench]
     fn bench_iht_tile_code_four_dimensions(b: &mut Bencher) {
         let mut iht = IHT::new(2048);
-        b.iter(|| iht.tiles(8, &[0.0, 1.0, 2.0, 3.0]));
+        b.iter(|| iht.tiles(8, &[0.0, 1.0, 2.0, 3.0], &[]));
     }
 
     #[bench]
     fn bench_non_iht_tile_code_small_single_dimension(b: &mut Bencher) {
-        b.iter(|| tiles(32, 8, &[0.0]));
+        b.iter(|| tiles(32, 8, &[0.0], &[]));
     }
 
     #[bench]
     fn bench_non_iht_tile_code_single_dimension(b: &mut Bencher) {
-        b.iter(|| tiles(2048, 8, &[0.0]));
+        b.iter(|| tiles(2048, 8, &[0.0], &[]));
     }
 
     #[bench]
     fn bench_non_iht_tile_code_small_four_dimensions(b: &mut Bencher) {
-        b.iter(|| tiles(32, 8, &[0.0, 1.0, 2.0, 3.0]));
+        b.iter(|| tiles(32, 8, &[0.0, 1.0, 2.0, 3.0], &[]));
     }
 
     #[bench]
     fn bench_non_iht_tile_code_four_dimensions(b: &mut Bencher) {
-        b.iter(|| tiles(2048, 8, &[0.0, 1.0, 2.0, 3.0]));
+        b.iter(|| tiles(2048, 8, &[0.0, 1.0, 2.0, 3.0], &[]));
     }
 }
