@@ -60,6 +60,14 @@ impl IHT {
         }
     }
 
+    fn get_index_read_only(&mut self, obj: Vec<isize>) -> Option<usize> {
+        use std::collections::hash_map::Entry;
+        match self.dictionary.entry(obj) {
+            Entry::Occupied(o) => Some(*o.get()),
+            Entry::Vacant(_) => None
+        }
+    }
+
     /// Convenience function to determine if the IHT is full. If it is, new tilings will result in collisions rather than new indices.
     pub fn full(&self) -> bool {
         self.dictionary.len() >= self.size
@@ -132,6 +140,32 @@ impl IHT {
                 coords.extend(ints);
             }
             tiles.push(self.get_index(coords));
+        }
+
+        tiles
+    }
+
+    /// The same as the `tiles` function, except never insert or generate new indices. If an tiling calculate would result in a new tile, return `None` instead
+    pub fn tiles_read_only(&mut self, num_tilings: usize, floats: &[f64], ints: Option<&[isize]>) -> Vec<Option<usize>> {
+        let q_floats = floats
+            .iter()
+            .map(|&x| (x * num_tilings as f64).floor() as isize)
+            .collect::<Vec<isize>>();
+        let mut tiles: Vec<Option<usize>> = Vec::with_capacity(num_tilings + ints.unwrap_or(&[]).len());
+
+        for tiling in 0..num_tilings {
+            let tiling_x2 = tiling as isize * 2;
+            let mut coords = Vec::with_capacity(1 + q_floats.len());
+            coords.push(tiling as isize);
+            let mut b = tiling as isize;
+            for q in q_floats.iter() {
+                coords.push((q + b) / num_tilings as isize);
+                b += tiling_x2;
+            }
+            if let Some(ints) = ints {
+                coords.extend(ints);
+            }
+            tiles.push(self.get_index_read_only(coords));
         }
 
         tiles
@@ -270,6 +304,14 @@ mod tests {
             }
         }
         assert!(iht.full());
+    }
+
+    #[test]
+    fn read_only_works() {
+        let mut iht = IHT::new(32);
+        iht.tiles(4, &[0.0], None);
+        let indices = iht.tiles_read_only(4, &[32.0], None);
+        assert_eq!(indices, vec![None, None, None, None]);
     }
 
     /*#[bench]
