@@ -3,7 +3,9 @@
 use std::collections::HashMap;
 
 fn basehash<H>(obj: H) -> usize
-    where H: std::hash::Hash {
+where
+    H: std::hash::Hash,
+{
     use std::collections::hash_map::DefaultHasher;
     use std::hash::Hasher;
 
@@ -36,8 +38,7 @@ impl IHT {
                 if count >= self.size {
                     self.overfull_count += 1;
                     basehash(v.into_key())
-                }
-                else {
+                } else {
                     *v.insert(count)
                 }
             }
@@ -53,7 +54,10 @@ impl IHT {
     }
 
     pub fn tiles(&mut self, num_tilings: usize, data_point: &[f64]) -> Vec<usize> {
-        let q_floats = data_point.iter().map(|&x| (x * num_tilings as f64).floor() as isize).collect::<Vec<isize>>();
+        let q_floats = data_point
+            .iter()
+            .map(|&x| (x * num_tilings as f64).floor() as isize)
+            .collect::<Vec<isize>>();
         let mut tiles: Vec<usize> = Vec::with_capacity(num_tilings);
 
         for tiling in 0..num_tilings {
@@ -74,7 +78,10 @@ impl IHT {
 }
 
 fn tiles(size: usize, num_tilings: usize, data_point: &[f64]) -> Vec<usize> {
-    let q_floats = data_point.iter().map(|&x| (x * num_tilings as f64).floor() as isize).collect::<Vec<isize>>();
+    let q_floats = data_point
+        .iter()
+        .map(|&x| (x * num_tilings as f64).floor() as isize)
+        .collect::<Vec<isize>>();
     let mut tiles: Vec<usize> = Vec::with_capacity(num_tilings);
 
     for tiling in 0..num_tilings {
