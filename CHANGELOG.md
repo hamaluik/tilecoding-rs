@@ -1,3 +1,19 @@
+## 2019-05-16, Version v0.2.0
+### Commits
+- [[`50f21f85ac`](https://github.com/hamaluik/tilecoding-rs/commit/50f21f85accd8e81dfc0c4715f539c7e4f7a1cc6)] simplified readme (Kenton Hamaluik)
+- [[`fbd6a84f2f`](https://github.com/hamaluik/tilecoding-rs/commit/fbd6a84f2f2ee232eb9029d55f357b2742d8c02b)] added wrapping versions (Kenton Hamaluik)
+- [[`68019b8c03`](https://github.com/hamaluik/tilecoding-rs/commit/68019b8c03ecafafce968fcba973225782d16789)] added a readonly mode to the IHT (Kenton Hamaluik)
+- [[`2bd5bc0718`](https://github.com/hamaluik/tilecoding-rs/commit/2bd5bc07188decbdc7434e6002a373728c8bd546)] added changelog (Kenton Hamaluik)
+
+### Stats
+```diff
+ CHANGELOG.md |  42 ++++++++++-
+ Cargo.toml   |   4 +-
+ README.md    |  22 +-----
+ src/lib.rs   | 263 ++++++++++++++++++++++++++++++++++++++++++++++++++++--------
+ 4 files changed, 274 insertions(+), 57 deletions(-)
+```
+
 ## 2019-05-16, Version v0.1.2
 ### Commits
 - [[`e7b8a3aea7`](https://github.com/hamaluik/tilecoding-rs/commit/e7b8a3aea7cb7b066bbf2c7ee0a05f18de3520ee)] fixed index bug when IHT is full (Kenton Hamaluik)
@@ -40,3 +56,4 @@
  src/lib.rs     | 304 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++-
  7 files changed, 624 insertions(+)
 ```
+
