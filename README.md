@@ -19,27 +19,7 @@ This version provides two implementations:
 1. Using an index-hash-table (IHT)
 2. Without using an IHT (slightly faster, not as "safe" as using the IHT as a collision table)
 
-## API
-
-Whether using an IHT or not, the general format of the `tiles` function is the same:
-
-```rust
-fn IHT::tiles(&mut self, num_tilings: usize, floats: &[f64], ints: Option<&[isize]>) -> Vec<usize>;
-fn tiles(size: usize, num_tilings: usize, floats: &[f64], ints: Option<&[isize]>) -> Vec<usize>;
-```
-
-> An IHT must be initialized with a `size`, which is the upper bounds of all returned indices. When not using an IHT, you must provide this parameter with each call. For extremely large problems, you may not be able to use an IHT, which is why the second form is provided.
-> 
-> The `num_tilings` argument should be a power of two greater or equal to four times the number of floats.
-> 
-> The `floats` argument is a list of floating-point numbers to be tiled.
-> 
-> The `ints` argument is optional, and when it is provided it is a list of integers that will also be tiled; all distinct integers will result in different tilings. In reinforcement learning, discrete actions are often provided here.
-
-## Examples
-
-
-### Simple
+## Simple Example
 
 ```rust
 // initialize an index-hash-table with size `1024`
