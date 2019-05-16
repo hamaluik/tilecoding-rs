@@ -1,4 +1,5 @@
-#![feature(test)]
+// benchmarks only available on nightly for now
+//#![feature(test)]
 
 use std::collections::HashMap;
 
@@ -53,6 +54,7 @@ impl IHT {
         self.dictionary.len()
     }
 
+    /// 
     pub fn tiles(&mut self, num_tilings: usize, floats: &[f64], ints: Option<&[isize]>) -> Vec<usize> {
         let q_floats = floats
             .iter()
@@ -106,10 +108,10 @@ pub fn tiles(size: usize, num_tilings: usize, floats: &[f64], ints: Option<&[isi
 
 #[cfg(test)]
 mod tests {
-    extern crate test;
+    //extern crate test;
 
     use super::*;
-    use test::Bencher;
+    //use test::Bencher;
 
     #[test]
     fn proper_number_of_tiles() {
@@ -174,7 +176,7 @@ mod tests {
         assert_eq!(indices, vec![9, 10, 11, 12, 13, 14, 15, 16]);
     }
 
-    #[bench]
+    /*#[bench]
     fn bench_iht_tile_code_small_single_dimension(b: &mut Bencher) {
         let mut iht = IHT::new(32);
         b.iter(|| iht.tiles(8, &[0.0], None));
@@ -216,5 +218,5 @@ mod tests {
     #[bench]
     fn bench_non_iht_tile_code_four_dimensions(b: &mut Bencher) {
         b.iter(|| tiles(2048, 8, &[0.0, 1.0, 2.0, 3.0], None));
-    }
+    }*/
 }
