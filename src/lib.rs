@@ -2,7 +2,7 @@
 
 use std::collections::HashMap;
 
-fn basehash<H>(obj: H) -> usize
+fn base_hash<H>(obj: H) -> usize
 where
     H: std::hash::Hash,
 {
@@ -37,7 +37,7 @@ impl IHT {
             Entry::Vacant(v) => {
                 if count >= self.size {
                     self.overfull_count += 1;
-                    basehash(v.into_key())
+                    base_hash(v.into_key())
                 } else {
                     *v.insert(count)
                 }
@@ -53,8 +53,8 @@ impl IHT {
         self.dictionary.len()
     }
 
-    pub fn tiles(&mut self, num_tilings: usize, data_point: &[f64]) -> Vec<usize> {
-        let q_floats = data_point
+    pub fn tiles(&mut self, num_tilings: usize, floats: &[f64]) -> Vec<usize> {
+        let q_floats = floats
             .iter()
             .map(|&x| (x * num_tilings as f64).floor() as isize)
             .collect::<Vec<isize>>();
@@ -77,8 +77,8 @@ impl IHT {
     }
 }
 
-pub fn tiles(size: usize, num_tilings: usize, data_point: &[f64]) -> Vec<usize> {
-    let q_floats = data_point
+pub fn tiles(size: usize, num_tilings: usize, floats: &[f64]) -> Vec<usize> {
+    let q_floats = floats
         .iter()
         .map(|&x| (x * num_tilings as f64).floor() as isize)
         .collect::<Vec<isize>>();
@@ -94,7 +94,7 @@ pub fn tiles(size: usize, num_tilings: usize, data_point: &[f64]) -> Vec<usize> 
             b += tiling_x2;
         }
 
-        tiles.push(basehash(coords) % size);
+        tiles.push(base_hash(coords) % size);
     }
 
     tiles

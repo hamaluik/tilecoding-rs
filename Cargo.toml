@@ -5,4 +5,3 @@ authors = ["Kenton Hamaluik <kenton@hamaluik.ca>"]
 edition = "2018"
 
 [dependencies]
-rand = "^0.6"
