@@ -1,12 +1,12 @@
 [package]
 name = "tilecoding"
-version = "0.1.2"
+version = "0.2.0"
 authors = ["Kenton Hamaluik <kenton@hamaluik.ca>"]
 edition = "2018"
 description = "Rust implementation of Dr. Richard S. Sutton's tile coding software."
 repository = "https://github.com/hamaluik/tilecoding-rs"
 readme = "README.md"
-keywords = ["tilecoding", "tiles", "tile", "rl", "ml"]
+keywords = ["tilecoding", "tiles", "tiling", "rl", "ml"]
 categories = ["data-structures", "encoding", "science", "algorithms"]
 license = "MIT/Apache-2.0"
 
