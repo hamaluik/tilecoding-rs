@@ -51,7 +51,7 @@ impl IHT {
                 if count >= self.size {
                     // if we're full, allow collisions (keeping track of this fact)
                     self.overfull_count += 1;
-                    base_hash(v.into_key())
+                    base_hash(v.into_key()) % self.size
                 } else {
                     // otherwise, just insert into the dictionary and return the result
                     *v.insert(count)
@@ -256,6 +256,20 @@ mod tests {
 
         assert_eq!(indices_1, indices_2);
         assert_ne!(indices_1, indices_3);
+    }
+
+    #[test]
+    fn iht_can_collide() {
+        const SIZE: usize = 32;
+        let mut iht = IHT::new(SIZE);
+        for i in 0..(SIZE * 2) {
+            let t = iht.tiles(8, &[i as f64], None);
+            assert_eq!(t.len(), 8);
+            for j in 0..8 {
+                assert!(t[j] < SIZE);
+            }
+        }
+        assert!(iht.full());
     }
 
     /*#[bench]
