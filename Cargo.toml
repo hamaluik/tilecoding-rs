@@ -10,4 +10,8 @@ keywords = ["tilecoding", "tiles", "tile", "reinforcement learning", "machine le
 categories = ["data-structures", "encoding", "science", "algorithms"]
 license = "MIT/Apache-2.0"
 
+[badges]
+travis-ci = { repository = "hamaluik/tilecoding-rs", branch = "master" }
+maintenance = { status = "passively-maintained" }
+
 [dependencies]
