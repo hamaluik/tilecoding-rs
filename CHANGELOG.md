@@ -1,3 +1,14 @@
+## 2019-06-07, Version v0.3.0
+### Commits
+- [[`ee6beaafe3`](https://github.com/hamaluik/tilecoding-rs/commit/ee6beaafe33ad575614feda990441c5e5ec869cc)] removed mut reference requirements for readonly access to the IHT (Kenton Hamaluik)
+
+### Stats
+```diff
+ Cargo.toml |  2 +-
+ src/lib.rs | 12 ++++--------
+ 2 files changed, 5 insertions(+), 9 deletions(-)
+```
+
 ## 2019-05-16, Version v0.2.0
 ### Commits
 - [[`50f21f85ac`](https://github.com/hamaluik/tilecoding-rs/commit/50f21f85accd8e81dfc0c4715f539c7e4f7a1cc6)] simplified readme (Kenton Hamaluik)
@@ -56,4 +67,3 @@
  src/lib.rs     | 304 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++-
  7 files changed, 624 insertions(+)
 ```
-
