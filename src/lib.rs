@@ -103,12 +103,8 @@ impl IHT {
         }
     }
 
-    fn get_index_read_only(&mut self, obj: Vec<isize>) -> Option<usize> {
-        use std::collections::hash_map::Entry;
-        match self.dictionary.entry(obj) {
-            Entry::Occupied(o) => Some(*o.get()),
-            Entry::Vacant(_) => None
-        }
+    fn get_index_read_only(&self, obj: Vec<isize>) -> Option<usize> {
+        self.dictionary.get(&obj).map(|i| *i)
     }
 
     /// Convenience function to determine if the IHT is full. If it is, new tilings will result in collisions rather than new indices.
@@ -176,7 +172,7 @@ impl IHT {
     }
 
     /// The same as the `tiles` function, except never insert or generate new indices. If an tiling calculate would result in a new tile, return `None` instead
-    pub fn tiles_read_only(&mut self, num_tilings: usize, floats: &[f64], ints: Option<&[isize]>) -> Vec<Option<usize>> {
+    pub fn tiles_read_only(&self, num_tilings: usize, floats: &[f64], ints: Option<&[isize]>) -> Vec<Option<usize>> {
         let q_floats = calculate_q_floats(floats, num_tilings);
         let mut tiles: Vec<Option<usize>> = Vec::with_capacity(num_tilings + ints.unwrap_or(&[]).len());
 
@@ -252,7 +248,7 @@ impl IHT {
     }
 
     /// The read-only version of `tiles_wrap`
-    pub fn tiles_wrap_read_only(&mut self, num_tilings: usize, floats: &[f64], wrap_widths: &[Option<isize>], ints: Option<&[isize]>) -> Vec<Option<usize>> {
+    pub fn tiles_wrap_read_only(&self, num_tilings: usize, floats: &[f64], wrap_widths: &[Option<isize>], ints: Option<&[isize]>) -> Vec<Option<usize>> {
         let q_floats = calculate_q_floats(floats, num_tilings);
         let mut tiles: Vec<Option<usize>> = Vec::with_capacity(num_tilings + ints.unwrap_or(&[]).len());
 
